@@ -28,6 +28,7 @@ namespace Diodon
     class ClipboardMenuItem : Gtk.ImageMenuItem
     {
         private string _checksum;
+        private string _full_text_lower;
 
         /**
          * Clipboard item constructor
@@ -37,6 +38,7 @@ namespace Diodon
         public ClipboardMenuItem(IClipboardItem item)
         {
             _checksum = item.get_checksum();
+            _full_text_lower = item.get_text().down();
             set_label(item.get_label());
 
             // check if image needs to be shown
@@ -45,6 +47,17 @@ namespace Diodon
                 set_image(image);
                 set_always_show_image(true);
             }
+        }
+
+        /**
+         * Check if this item matches the given search query (which should be lowercased)
+         */
+        public bool matches_search(string query_lower)
+        {
+            if (query_lower == null || query_lower.length == 0) {
+                return true;
+            }
+            return _full_text_lower.contains(query_lower);
         }
 
         /**

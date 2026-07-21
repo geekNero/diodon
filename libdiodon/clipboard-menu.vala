@@ -28,6 +28,8 @@ namespace Diodon
     {
         private Controller controller;
         private unowned List<Gtk.Widget> static_menu_items;
+        private string search_query = "";
+        private Gtk.MenuItem search_menu_item;
 
         /**
          * Create clipboard menu
@@ -85,6 +87,11 @@ namespace Diodon
             Gtk.MenuItem quit_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.QUIT, null);
             quit_item.activate.connect(on_clicked_quit);
             append(quit_item);
+
+            search_menu_item = new Gtk.MenuItem();
+            search_menu_item.set_sensitive(false);
+            search_menu_item.set_no_show_all(true);
+            insert(search_menu_item, 0);
 
             show_all();
 
@@ -181,28 +188,90 @@ namespace Diodon
         }
 
         /**
+         * Update search filter and UI
+         */
+        private void update_search()
+        {
+            if (search_query.length == 0) {
+                search_menu_item.hide();
+            } else {
+                search_menu_item.set_label(_("Search: ") + search_query);
+                search_menu_item.show();
+            }
+
+            string search_lower = search_query.down();
+            bool first = true;
+
+            foreach(Gtk.Widget item in get_children()) {
+                if (item is ClipboardMenuItem) {
+                    ClipboardMenuItem cb_item = (ClipboardMenuItem)item;
+                    if (cb_item.matches_search(search_lower)) {
+                        cb_item.show();
+                        if (first && search_query.length > 0) {
+                            this.select_item(cb_item);
+                            first = false;
+                        }
+                    } else {
+                        cb_item.hide();
+                    }
+                }
+            }
+        }
+
+        /**
          * Allow moving of cursor with vi-style j and k keys
          */
         private bool on_key_pressed(Gdk.EventKey event)
         {
             uint down_keyval = Gdk.keyval_from_name("j");
             uint up_keyval = Gdk.keyval_from_name("k");
+            uint backspace_keyval = Gdk.keyval_from_name("BackSpace");
+            uint escape_keyval = Gdk.keyval_from_name("Escape");
 
             uint pressed_keyval = Gdk.keyval_to_lower(event.keyval);
-            if(pressed_keyval == down_keyval) {
-                if(get_selected_item() == null) {
-                    select_first(true);
-                } else {
-                    move_selected(1);
+            
+            // Only use vi-style movement if search query is empty
+            if(search_query.length == 0) {
+                if(pressed_keyval == down_keyval) {
+                    if(get_selected_item() == null) {
+                        select_first(true);
+                    } else {
+                        move_selected(1);
+                    }
+                    return true;
                 }
-                return true;
+                if(pressed_keyval == up_keyval) {
+                    if(get_selected_item() == null) {
+                        select_first(true);
+                    }
+                    move_selected(-1);
+                    return true;
+                }
             }
-            if(pressed_keyval == up_keyval) {
-                if(get_selected_item() == null) {
-                    select_first(true);
+
+            if (pressed_keyval == backspace_keyval) {
+                long chars = search_query.char_count();
+                if (chars > 0) {
+                    long bytes = search_query.index_of_nth_char(chars - 1);
+                    search_query = search_query.substring(0, bytes);
+                    update_search();
+                    return true;
                 }
-                move_selected(-1);
-                return true;
+            } else if (pressed_keyval == escape_keyval) {
+                if (search_query.length > 0) {
+                    search_query = "";
+                    update_search();
+                    return true;
+                }
+            } else {
+                unichar c = Gdk.keyval_to_unicode(event.keyval);
+                if (c != 0 && !c.iscntrl()) {
+                    StringBuilder sb = new StringBuilder(search_query);
+                    sb.append_unichar(c);
+                    search_query = sb.str;
+                    update_search();
+                    return true;
+                }
             }
 
             return false;
