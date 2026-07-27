@@ -23,7 +23,7 @@ namespace Diodon
 {
     /**
      * A gtk menu item holding a checksum of a clipboard item. It only keeps
-     * the checksum as it would waste memory to keep the hole item available.
+     * the checksum as it would waste memory to keep the whole item available.
      */
     class ClipboardMenuItem : Gtk.ImageMenuItem
     {

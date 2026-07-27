@@ -30,6 +30,7 @@ namespace Diodon
         private unowned List<Gtk.Widget> static_menu_items;
         private string search_query = "";
         private Gtk.MenuItem search_menu_item;
+        private int enable_search = 0;
 
         /**
          * Create clipboard menu
@@ -192,7 +193,7 @@ namespace Diodon
          */
         private void update_search()
         {
-            if (search_query.length == 0) {
+            if (enable_search == 0) {
                 search_menu_item.hide();
             } else {
                 search_menu_item.set_label(_("Search: ") + search_query);
@@ -225,13 +226,15 @@ namespace Diodon
         {
             uint down_keyval = Gdk.keyval_from_name("j");
             uint up_keyval = Gdk.keyval_from_name("k");
+            uint label_search_keyval = Gdk.keyval_from_name("slash");
+            // uint storage_search_keyval = Gdk.keyval_from_name("?");
             uint backspace_keyval = Gdk.keyval_from_name("BackSpace");
             uint escape_keyval = Gdk.keyval_from_name("Escape");
 
             uint pressed_keyval = Gdk.keyval_to_lower(event.keyval);
             
             // Only use vi-style movement if search query is empty
-            if(search_query.length == 0) {
+            if(enable_search == 0) {
                 if(pressed_keyval == down_keyval) {
                     if(get_selected_item() == null) {
                         select_first(true);
@@ -239,13 +242,18 @@ namespace Diodon
                         move_selected(1);
                     }
                     return true;
-                }
-                if(pressed_keyval == up_keyval) {
+                } else if(pressed_keyval == up_keyval) {
                     if(get_selected_item() == null) {
                         select_first(true);
                     }
                     move_selected(-1);
                     return true;
+                } else if(pressed_keyval == label_search_keyval){
+                    enable_search = 1;
+                    update_search();
+                    return true;
+                }else{
+                    return false;
                 }
             }
 
@@ -258,11 +266,10 @@ namespace Diodon
                     return true;
                 }
             } else if (pressed_keyval == escape_keyval) {
-                if (search_query.length > 0) {
+                    enable_search = 0;
                     search_query = "";
                     update_search();
                     return true;
-                }
             } else {
                 unichar c = Gdk.keyval_to_unicode(event.keyval);
                 if (c != 0 && !c.iscntrl()) {
