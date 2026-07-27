@@ -21,6 +21,9 @@
 
 namespace Diodon
 {
+
+    private const int LABEL_SIZE = 100;
+
     /**
      * Represents a text clipboard item holding simple text.
      */
@@ -51,13 +54,33 @@ namespace Diodon
                 _checksum = Checksum.compute_for_string(ChecksumType.SHA1, _text);
             }
 
-            // label should not be longer than 50 letters
-            _label = _text;
-            if (_label.char_count() > 50) {
-                long index_char = _label.index_of_nth_char(50);
-                _label = _label.substring(0, index_char) + "...";
+            
+            /*
+                Reduce whitespaces from string to squeeze in more of the text content in label.
+             */
+            StringBuilder label_cpy = new StringBuilder();
+            bool in_space = false;
+            int byte_index = 0;
+            unichar c;
+
+
+            while (_text.get_next_char(ref byte_index, out c)) {
+                if (c.isspace()) {
+                    if (!in_space) {
+                        label_cpy.append_c(' ');
+                        in_space = true;
+                    }
+                } else {
+                    label_cpy.append_unichar(c);
+                    in_space = false;
+                }
+
+                if (label_cpy.len >= LABEL_SIZE) {
+                    break;
+                }
             }
-            _label = _label.replace("\n", " ");
+
+            _label = label_cpy.str;            
         }
 
         /**
