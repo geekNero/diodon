@@ -84,11 +84,11 @@ namespace Diodon
           Gtk.Label? label = ((Gtk.MenuItem)this).get_child() as Gtk.Label;
           if (label != null) {
             label.set_max_width_chars(width);
+            label.set_ellipsize(Pango.EllipsizeMode.END);
             if (width< 60){
                 label.set_line_wrap(true);
                 label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
                 label.set_lines(2); // Maximum number of lines to display
-                label.set_ellipsize(Pango.EllipsizeMode.END);
               }
            }
         }
