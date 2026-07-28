@@ -118,25 +118,16 @@ namespace Diodon
 
         public void show_menu()
         {
-
             int width = Utility.get_current_window_geometry().width;
         
             // 2. Calculate dynamic character limit based on THAT monitor's width
-            int dynamic_chars = ((int)(width/ 25)).clamp(40, 150);
+            int dynamic_chars = ((int)(width/ 30)).clamp(40, 150);
 
             // 3. Update the max_width_chars of every menu item before displaying
             foreach (Gtk.Widget item in get_children()) {
-                if (item is ClipboardMenuItem) {
-                    Gtk.Label? label = ((Gtk.MenuItem)item).get_child() as Gtk.Label;
-                    if (label != null) {
-                        label.set_max_width_chars(dynamic_chars);
-                        if (dynamic_chars < 70){
-                            label.set_line_wrap(true);
-                            label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
-                            label.set_lines(2); // Maximum number of lines to display
-                            label.set_ellipsize(Pango.EllipsizeMode.END);
-                        }
-                    }
+                ClipboardMenuItem? clipboard_item = (ClipboardMenuItem)item;    
+                if (clipboard_item != null){
+                    clipboard_item.set_item_label_width_chars(dynamic_chars);
                 }
             }
         

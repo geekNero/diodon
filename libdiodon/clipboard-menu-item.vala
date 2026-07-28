@@ -29,6 +29,27 @@ namespace Diodon
     {
         private string _checksum;
         private string _full_text_lower;
+        private static Gtk.CssProvider css; 
+        const string css_data = """
+          menuitem {
+            margin: 2px 6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background-color: rgba(128, 128, 128, 0.08);
+            border: 1px solid rgba(128, 128, 128, 0.15);
+            border-left: 3px solid rgba(128, 128, 128, 0.35);
+            transition: all 150ms cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        menuitem:hover,
+        menuitem:selected {
+            background-color: rgba(53, 132, 228, 0.85);
+            border-color: rgba(53, 132, 228, 0.95);
+            border-left: 3px solid #78aeed;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+        }
+        """;
 
         /**
          * Clipboard item constructor
@@ -40,6 +61,9 @@ namespace Diodon
             _checksum = item.get_checksum();
             _full_text_lower = item.get_text().down();
             set_label(item.get_label());
+            // styling clipboard item to make them more visible.
+            ensure_css();
+            this.get_style_context().add_provider(css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
             // check if image needs to be shown
             Gtk.Image? image = item.get_image();
@@ -47,6 +71,39 @@ namespace Diodon
                 set_image(image);
                 set_always_show_image(true);
             }
+        }
+
+        
+
+        /**
+         * Set ClipboardMenuItem label width in characters.
+         *
+         * @param width
+         */
+        public void set_item_label_width_chars(int width){
+          Gtk.Label? label = ((Gtk.MenuItem)this).get_child() as Gtk.Label;
+          if (label != null) {
+            label.set_max_width_chars(width);
+            if (width< 60){
+                label.set_line_wrap(true);
+                label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+                label.set_lines(2); // Maximum number of lines to display
+                label.set_ellipsize(Pango.EllipsizeMode.END);
+              }
+           }
+        }
+
+        private static void ensure_css(){
+          if (css != null){
+            return;
+          }
+          css = new Gtk.CssProvider();
+          try {
+              css.load_from_data(css_data, -1);
+          } catch (Error e) {
+              warning("Failed to apply CSS: %s", e.message);
+          }
+
         }
 
         /**
