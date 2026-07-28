@@ -32,6 +32,11 @@ namespace Diodon
         private Gtk.MenuItem search_menu_item;
         private int enable_search = 0;
 
+        // Label related constants
+        private const int MAX_LABEL_WIDTH = 150;
+        private const int MIN_LABEL_WIDTH = 60;
+        private const float LABEL_TO_WINDOW_RATIO = 0.04f;
+
         /**
          * Create clipboard menu
          *
@@ -45,6 +50,20 @@ namespace Diodon
             this.controller = controller;
             this.static_menu_items = static_menu_items;
 
+            Gtk.MenuItem clear_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.CLEAR, null);
+            clear_item.activate.connect(on_clicked_clear);
+            append(clear_item);
+
+            Gtk.MenuItem preferences_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.PREFERENCES, null);
+            preferences_item.activate.connect(on_clicked_preferences);
+            append(preferences_item);
+
+            Gtk.MenuItem quit_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.QUIT, null);
+            quit_item.activate.connect(on_clicked_quit);
+            append(quit_item);
+
+            Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
+            append(sep_item);
 
             search_menu_item = new Gtk.MenuItem();
             search_menu_item.set_sensitive(false);
@@ -72,31 +91,13 @@ namespace Diodon
 
             foreach(IClipboardItem item in items) {
                 append_clipboard_item(item);
-                // Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
-                // append(sep_item);
             }
-
-            Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
-            append(sep_item);
 
             if(static_menu_items != null) {
                 foreach(Gtk.MenuItem menu_item in static_menu_items) {
                     append(menu_item);
                 }
             }
-
-            Gtk.MenuItem clear_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.CLEAR, null);
-            clear_item.activate.connect(on_clicked_clear);
-            append(clear_item);
-
-            Gtk.MenuItem preferences_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.PREFERENCES, null);
-            preferences_item.activate.connect(on_clicked_preferences);
-            append(preferences_item);
-
-            Gtk.MenuItem quit_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.QUIT, null);
-            quit_item.activate.connect(on_clicked_quit);
-            append(quit_item);
-
 
             show_all();
 
@@ -116,27 +117,59 @@ namespace Diodon
             append(menu_item);
         }
 
+        /**
+        * show_menu computes the popup position, character width and height based on the cursor position. 
+        */
         public void show_menu()
         {
-            int width = Utility.get_current_window_geometry().width;
-        
-            // 2. Calculate dynamic character limit based on THAT monitor's width
-            int dynamic_chars = ((int)(width/ 30)).clamp(40, 150);
+            
+            Gdk.Rectangle monitor_dimensions = Utility.get_current_window_geometry();
 
-            // 3. Update the max_width_chars of every menu item before displaying
+            // needed to set the popup positions
+            Gdk.Rectangle popup_anchor_rect = {
+                    monitor_dimensions.x + (monitor_dimensions.width / 2), // Horizontally centered
+                    monitor_dimensions.y + 2, // 2px down from top edge
+                    1,
+                    1
+                };
+
+            // Forcing the popup to avoid flowing further than 3/4 of the monitor size.
+            this.margin_bottom = (int)(monitor_dimensions.height / 4);
+
+            // Determining the character width 
+            int dynamic_char_width = width_in_charcters(monitor_dimensions.width);
+        
+            // The default cursor position is set to the first widget. So the first clipboard item has to be explicitly selected.
+            Gtk.Widget first_clipboard_item = null;
+            
+            // Update the max_width_chars of every menu item before displaying
             foreach (Gtk.Widget item in get_children()) {
-                ClipboardMenuItem? clipboard_item = (ClipboardMenuItem)item;    
-                if (clipboard_item != null){
-                    clipboard_item.set_item_label_width_chars(dynamic_chars);
+                 if (item is ClipboardMenuItem) {
+                    ClipboardMenuItem clipboard_item = (ClipboardMenuItem)item;
+                    clipboard_item.set_item_label_width_chars(dynamic_char_width);
+                    if (first_clipboard_item == null)
+                    {
+                        first_clipboard_item = item;
+                    }
                 }
             }
-        
-            // timer is needed to workaround race condition between X11 and Gdk event
-            // otherwise popup does not open
+
             Timeout.add(
-                250,
-                () => { popup(null, null, null, 0, Gtk.get_current_event_time()); return false; }
-            );
+                    250,
+                    () => {
+                        popup_at_rect(
+                            Gdk.Screen.get_default().get_root_window(),
+                            popup_anchor_rect,
+                            Gdk.Gravity.NORTH, // Top-Center of the anchor point
+                            Gdk.Gravity.NORTH, // Align the top-center edge of our menu
+                            null
+                        );
+
+                        this.select_item(first_clipboard_item);
+
+                        return false;
+                    }
+                );
         }
 
         /**
@@ -169,6 +202,12 @@ namespace Diodon
            return _label;
         }
 
+        /**
+         * Calculating the width in characters based on the resolution width provided.
+         */
+        private int width_in_charcters(int width){
+            return ((int)(width*LABEL_TO_WINDOW_RATIO)).clamp(MIN_LABEL_WIDTH, MAX_LABEL_WIDTH);   
+        }
 
         /**
          * User event: clicked menu item clear

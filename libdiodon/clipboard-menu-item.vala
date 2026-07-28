@@ -85,7 +85,7 @@ namespace Diodon
           if (label != null) {
             label.set_max_width_chars(width);
             label.set_ellipsize(Pango.EllipsizeMode.END);
-            if (width< 60){
+            if (width< 80){
                 label.set_line_wrap(true);
                 label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
                 label.set_lines(2); // Maximum number of lines to display
