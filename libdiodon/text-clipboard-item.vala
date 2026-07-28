@@ -22,7 +22,7 @@
 namespace Diodon
 {
 
-    private const int LABEL_SIZE = 100;
+    private const int LABEL_SIZE = 256;
 
     /**
      * Represents a text clipboard item holding simple text.

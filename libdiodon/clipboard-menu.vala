@@ -45,6 +45,12 @@ namespace Diodon
             this.controller = controller;
             this.static_menu_items = static_menu_items;
 
+
+            search_menu_item = new Gtk.MenuItem();
+            search_menu_item.set_sensitive(false);
+            search_menu_item.set_no_show_all(true);
+            append(search_menu_item);
+
             if(error != null) {
                 Gtk.MenuItem error_item = new Gtk.MenuItem.with_label(wrap_label(error));
                 error_item.set_sensitive(false);
@@ -66,6 +72,8 @@ namespace Diodon
 
             foreach(IClipboardItem item in items) {
                 append_clipboard_item(item);
+                // Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
+                // append(sep_item);
             }
 
             Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
@@ -89,10 +97,6 @@ namespace Diodon
             quit_item.activate.connect(on_clicked_quit);
             append(quit_item);
 
-            search_menu_item = new Gtk.MenuItem();
-            search_menu_item.set_sensitive(false);
-            search_menu_item.set_no_show_all(true);
-            insert(search_menu_item, 0);
 
             show_all();
 
@@ -114,6 +118,28 @@ namespace Diodon
 
         public void show_menu()
         {
+
+            int width = Utility.get_current_window_geometry().width;
+        
+            // 2. Calculate dynamic character limit based on THAT monitor's width
+            int dynamic_chars = ((int)(width/ 25)).clamp(40, 150);
+
+            // 3. Update the max_width_chars of every menu item before displaying
+            foreach (Gtk.Widget item in get_children()) {
+                if (item is ClipboardMenuItem) {
+                    Gtk.Label? label = ((Gtk.MenuItem)item).get_child() as Gtk.Label;
+                    if (label != null) {
+                        label.set_max_width_chars(dynamic_chars);
+                        if (dynamic_chars < 70){
+                            label.set_line_wrap(true);
+                            label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+                            label.set_lines(2); // Maximum number of lines to display
+                            label.set_ellipsize(Pango.EllipsizeMode.END);
+                        }
+                    }
+                }
+            }
+        
             // timer is needed to workaround race condition between X11 and Gdk event
             // otherwise popup does not open
             Timeout.add(
