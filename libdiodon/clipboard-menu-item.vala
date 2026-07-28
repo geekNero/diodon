@@ -90,6 +90,10 @@ namespace Diodon
                 label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
                 label.set_lines(2); // Maximum number of lines to display
               }
+            else {
+                label.set_line_wrap(false);
+                label.set_lines(1);
+            }
            }
         }
 
