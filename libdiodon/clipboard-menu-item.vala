@@ -23,7 +23,7 @@ namespace Diodon
 {
     /**
      * A gtk menu item holding a checksum of a clipboard item. It only keeps
-     * the checksum as it would waste memory to keep the hole item available.
+     * the checksum as it would waste memory to keep the whole item available.
      */
     class ClipboardMenuItem : Gtk.ImageMenuItem
     {
@@ -38,6 +38,7 @@ namespace Diodon
         {
             _checksum = item.get_checksum();
             set_label(item.get_label());
+            this.get_style_context().add_class("clipboard-item");
 
             // check if image needs to be shown
             Gtk.Image? image = item.get_image();
@@ -45,6 +46,30 @@ namespace Diodon
                 set_image(image);
                 set_always_show_image(true);
             }
+        }
+
+        
+
+        /**
+         * Set ClipboardMenuItem label width in characters.
+         *
+         * @param width
+         */
+        public void set_item_label_width_chars(int width){
+          Gtk.Label? label = ((Gtk.MenuItem)this).get_child() as Gtk.Label;
+          if (label != null) {
+            label.set_max_width_chars(width);
+            label.set_ellipsize(Pango.EllipsizeMode.END);
+            if (width< 80){
+                label.set_line_wrap(true);
+                label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR);
+                label.set_lines(2); // Maximum number of lines to display
+              }
+            else {
+                label.set_line_wrap(false);
+                label.set_lines(1);
+            }
+           }
         }
 
         /**

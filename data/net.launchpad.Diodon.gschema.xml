@@ -1,5 +1,10 @@
 <schemalist>
   <schema gettext-domain="diodon" id="net.launchpad.Diodon.clipboard" path="/net/launchpad/diodon/clipboard/">
+    <key name="theme" type="s">
+          <default>'default'</default>
+          <summary>Clipboard menu theme</summary>
+          <description>The CSS theme preset to use for the clipboard menu (default, void, catppuccin, gruvbox).</description>
+    </key>
     <key name="use-clipboard" type="b">
       <default>true</default>
       <summary>Use clipboard (Ctrl+C)</summary>

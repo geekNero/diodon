@@ -27,6 +27,12 @@ namespace Diodon
     public class ClipboardConfiguration : GLib.Object
     {
         private int _recent_items_size = 25;
+
+        /**
+         * active CSS theme preset
+         */
+        public string theme { get; set; default = "default"; }
+
         /**
          * flag whether primary selection is enabled
          */

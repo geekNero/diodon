@@ -145,6 +145,27 @@ namespace Diodon
             return false;
         }
 
+        /**
+         * Helper method returns dimensions of current monitor based on cursor position.
+         *
+         * @return Gdk.Rectangle for the active montior.
+         */
+        public static Gdk.Rectangle get_current_window_geometry()
+        {
+
+            Gdk.Display display = Gdk.Display.get_default();
+            Gdk.Seat seat = display.get_default_seat();
+            Gdk.Device pointer = seat.get_pointer();
+
+            int x, y;
+            pointer.get_position(null, out x, out y);
+
+            // Directly get the monitor at the cursor's current (x, y) coordinates
+            Gdk.Monitor monitor = display.get_monitor_at_point(x, y);
+            return monitor.get_geometry();
+       
+        }
+
         private static X.Window get_active_window()
         {
             unowned Gdk.Screen screen = Gdk.Screen.get_default();

@@ -104,6 +104,16 @@ namespace Diodon
                         configuration.recent_items_size = recent_items_size.get_value_as_int();
                     });
 
+                    // theme combobox
+                    Gtk.ComboBoxText combobox_theme =
+                        builder.get_object("combobox_theme") as Gtk.ComboBoxText;
+                    combobox_theme.active_id = configuration.theme;
+                    combobox_theme.changed.connect(() => {
+                    if (combobox_theme.active_id != null) {
+                        configuration.theme = combobox_theme.active_id;
+                    }
+                    });
+
                     // plugins
                     PeasGtk.PluginManager manager = new PeasGtk.PluginManager(
                         Peas.Engine.get_default());
