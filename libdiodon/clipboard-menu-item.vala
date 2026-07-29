@@ -40,6 +40,7 @@ namespace Diodon
             _checksum = item.get_checksum();
             _full_text_lower = item.get_text().down();
             set_label(item.get_label());
+            this.get_style_context().add_class("clipboard-item");
 
             // check if image needs to be shown
             Gtk.Image? image = item.get_image();

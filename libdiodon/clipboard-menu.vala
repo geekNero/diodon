@@ -55,21 +55,25 @@ namespace Diodon
             load_css(controller.get_configuration().theme);
 
             Gtk.MenuItem clear_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.CLEAR, null);
+            clear_item.get_style_context().add_class("action-item");
             clear_item.activate.connect(on_clicked_clear);
             append(clear_item);
 
             Gtk.MenuItem preferences_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.PREFERENCES, null);
             preferences_item.activate.connect(on_clicked_preferences);
+            preferences_item.get_style_context().add_class("action-item");
             append(preferences_item);
 
             Gtk.MenuItem quit_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.QUIT, null);
             quit_item.activate.connect(on_clicked_quit);
+            quit_item.get_style_context().add_class("action-item");
             append(quit_item);
 
             Gtk.SeparatorMenuItem sep_item = new Gtk.SeparatorMenuItem();
             append(sep_item);
 
             search_menu_item = new Gtk.MenuItem();
+            search_menu_item.get_style_context().add_class("search-item");
             search_menu_item.set_sensitive(false);
             search_menu_item.set_no_show_all(true);
             append(search_menu_item);
