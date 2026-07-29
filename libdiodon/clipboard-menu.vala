@@ -30,7 +30,9 @@ namespace Diodon
         private unowned List<Gtk.Widget> static_menu_items;
         private string search_query = "";
         private Gtk.MenuItem search_menu_item;
+        private Gtk.MenuItem spacer_menu_item;
         private int enable_search = 0;
+        private bool has_items = false;
 
         // Label related constants
         private const int MAX_LABEL_WIDTH = 150;
@@ -109,6 +111,14 @@ namespace Diodon
                 }
             }
 
+            spacer_menu_item = new Gtk.MenuItem();
+            spacer_menu_item.set_label(" ");
+            spacer_menu_item.get_style_context().add_class("spacer-item");
+            spacer_menu_item.set_sensitive(false);
+            spacer_menu_item.set_no_show_all(true);
+            spacer_menu_item.show();
+            append(spacer_menu_item);
+
             show_all();
 
             this.key_press_event.connect(on_key_pressed);
@@ -148,7 +158,7 @@ namespace Diodon
                 };
 
             // Forcing the popup to avoid flowing further than 3/4 of the monitor size.
-            this.margin_bottom = (int)(monitor_dimensions.height / 4);
+            this.margin_bottom = (int)(monitor_dimensions.height / 4) - 30;
 
             // Determining the character width 
             int dynamic_char_width = width_in_charcters(monitor_dimensions.width);
@@ -179,7 +189,12 @@ namespace Diodon
                             null
                         );
 
-                        this.select_item(first_clipboard_item);
+                        if (first_clipboard_item != null){
+                            this.select_item(first_clipboard_item);
+                            has_items = true;
+                        }else{
+                            has_items = false;
+                        }
 
                         return false;
                     }
@@ -287,6 +302,7 @@ namespace Diodon
             enable_search = 0;
             search_query = "";
             search_menu_item.hide();
+            spacer_menu_item.show();
             foreach(Gtk.Widget item in get_children()) {
                 if (item is ClipboardMenuItem) {
                     ClipboardMenuItem cb_item = (ClipboardMenuItem)item;
@@ -306,6 +322,7 @@ namespace Diodon
             } else {
                 search_menu_item.set_label(_("Search: ") + search_query);
                 search_menu_item.show();
+                spacer_menu_item.hide();
             }
 
             string search_lower = search_query.down();
@@ -314,7 +331,7 @@ namespace Diodon
             foreach(Gtk.Widget item in get_children()) {
                 if (item is ClipboardMenuItem) {
                     ClipboardMenuItem cb_item = (ClipboardMenuItem)item;
-                    if (cb_item.matches_search(search_lower)) {
+                    if (matches_search(cb_item, search_lower)) {
                         cb_item.show();
                         if (first && search_query.length > 0) {
                             this.select_item(cb_item);
@@ -325,6 +342,13 @@ namespace Diodon
                     }
                 }
             }
+
+        }
+
+        private bool matches_search(ClipboardMenuItem cb_item, string search_string)
+        {
+            string label = cb_item.get_label().down();   
+            return label.contains(search_string);
         }
 
         /**
@@ -356,7 +380,7 @@ namespace Diodon
                     }
                     move_selected(-1);
                     return true;
-                } else if(pressed_keyval == label_search_keyval){
+                } else if(pressed_keyval == label_search_keyval && has_items){
                     enable_search = 1;
                     update_search();
                     return true;
