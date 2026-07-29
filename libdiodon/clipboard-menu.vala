@@ -52,6 +52,8 @@ namespace Diodon
         {
             this.controller = controller;
             this.static_menu_items = static_menu_items;
+            this.get_style_context().add_class("diodon-menu");
+            
             load_css(controller.get_configuration().theme);
 
             Gtk.MenuItem clear_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.CLEAR, null);

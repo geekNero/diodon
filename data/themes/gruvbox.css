@@ -1,11 +1,11 @@
-menu {
+menu.diodon-menu{
       background-color: #1d2021;
       border: 1px solid #3c3836;
       border-radius: 10px;
       padding: 6px 0px;
     }
 
-separator {
+menu.diodon-menu separator {
   background-color: #3c3836;
   min-height: 1px;
   margin: 6px 12px;
