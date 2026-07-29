@@ -110,6 +110,10 @@ namespace Diodon
             show_all();
 
             this.key_press_event.connect(on_key_pressed);
+
+            this.hide.connect(() => {
+                reset_search();
+            });
         }
 
         /**
@@ -272,6 +276,22 @@ namespace Diodon
             ClipboardMenuItem clipboard_menu_item = (ClipboardMenuItem)menu_item;
             controller.select_item_by_checksum.begin(clipboard_menu_item.get_item_checksum());
         }
+        
+
+        /**
+         * Update search filter and UI
+         */
+        private void reset_search(){
+            enable_search = 0;
+            search_query = "";
+            search_menu_item.hide();
+            foreach(Gtk.Widget item in get_children()) {
+                if (item is ClipboardMenuItem) {
+                    ClipboardMenuItem cb_item = (ClipboardMenuItem)item;
+                    cb_item.show();           
+                }
+            }
+        }
 
         /**
          * Update search filter and UI
@@ -279,7 +299,8 @@ namespace Diodon
         private void update_search()
         {
             if (enable_search == 0) {
-                search_menu_item.hide();
+                reset_search();
+                return;
             } else {
                 search_menu_item.set_label(_("Search: ") + search_query);
                 search_menu_item.show();
@@ -351,9 +372,7 @@ namespace Diodon
                     return true;
                 }
             } else if (pressed_keyval == escape_keyval) {
-                    enable_search = 0;
-                    search_query = "";
-                    update_search();
+                    reset_search();
                     return true;
             } else {
                 unichar c = Gdk.keyval_to_unicode(event.keyval);
