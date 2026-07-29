@@ -157,6 +157,12 @@ namespace Diodon
          */
         private void init_configuration()
         {
+            settings_clipboard.bind("theme", configuration,
+                "theme", SettingsBindFlags.DEFAULT);
+            configuration.notify["theme"].connect(() => {
+               ClipboardMenu.load_css(configuration.theme); 
+            });
+            
             settings_clipboard.bind("synchronize-clipboards", configuration,
                 "synchronize-clipboards", SettingsBindFlags.DEFAULT);
             settings_clipboard.bind("add-images", configuration,

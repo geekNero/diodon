@@ -60,3 +60,12 @@ subdir('icons')
 meson.add_install_script('post-install.sh', datadir)
 message('''You may need to recompile your gsettings schemas or regenerate
          your icon cache after installation.''')
+
+# Themes
+install_data(
+        'themes/default.css',
+        'themes/void.css',
+        'themes/catppuccin.css',
+        'themes/gruvbox.css',
+        install_dir: join_paths(datadir, 'diodon', 'themes')
+)

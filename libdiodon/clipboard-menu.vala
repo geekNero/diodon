@@ -37,6 +37,9 @@ namespace Diodon
         private const int MIN_LABEL_WIDTH = 60;
         private const float LABEL_TO_WINDOW_RATIO = 0.04f;
 
+        // Menu related CSS
+        private static Gtk.CssProvider css; 
+
         /**
          * Create clipboard menu
          *
@@ -45,10 +48,11 @@ namespace Diodon
          * @param menu_items additional menu items to be added after separator
          * @param privacy_mode check whether privacy mode is enabled
          */
-        public ClipboardMenu(Controller controller, List<IClipboardItem> items, List<Gtk.MenuItem>? static_menu_items, bool privace_mode, string? error = null)
+        public ClipboardMenu(Controller controller, List<IClipboardItem> items, List<Gtk.MenuItem>? static_menu_items, bool privace_mode,string? error = null)
         {
             this.controller = controller;
             this.static_menu_items = static_menu_items;
+            load_css(controller.get_configuration().theme);
 
             Gtk.MenuItem clear_item = new Gtk.ImageMenuItem.from_stock(Gtk.Stock.CLEAR, null);
             clear_item.activate.connect(on_clicked_clear);
@@ -191,6 +195,27 @@ namespace Diodon
             destroy();
             dispose();
         }
+
+        public static void load_css(string theme){
+            if (css == null){
+              css = new Gtk.CssProvider();
+            }
+            
+            string target_file = Path.build_filename(Config.PKG_DATA_DIR, "themes", theme + ".css");
+
+            try {
+            css.load_from_path(target_file);
+            Gtk.StyleContext.add_provider_for_screen(
+                      Gdk.Screen.get_default(),
+                      css,
+                      Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+                  );
+
+            } catch (Error e) {
+              warning("Failed to load theme CSS from %s: %s", target_file, e.message);
+            }
+        }
+
 
         /**
          * Wrap label at colons and dots.

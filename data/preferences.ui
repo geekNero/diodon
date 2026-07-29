@@ -199,6 +199,48 @@
                     <property name="position">6</property>
                   </packing>
                 </child>
+                <child>
+                      <object class="GtkHBox" id="hbox_theme">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Select color theme for clipboard menu.</property>
+                        <child>
+                          <object class="GtkLabel" id="label_theme">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Theme preset</property>
+                            <property name="ellipsize">start</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkComboBoxText" id="combobox_theme">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <items>
+                              <item id="default" translatable="yes">Obsidian &amp; Electric Azure</item>
+                              <item id="void" translatable="yes">Void (AMOLED Dark)</item>
+                              <item id="catppuccin" translatable="yes">Catppuccin Mocha</item>
+                              <item id="gruvbox" translatable="yes">Gruvbox Dark Hard</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">7</property>
+                      </packing>
+                    </child>
               </object>
             </child>
             <child type="tab">
