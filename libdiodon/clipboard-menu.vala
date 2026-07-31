@@ -21,6 +21,13 @@
 
 namespace Diodon
 {
+
+    private enum SearchMode {
+        DISABLED,
+        LABEL,      // Incremental search triggered by '/'
+        STORAGE     // Storage search triggered by '?'
+    }
+
     /**
      * A gtk menu item holding a list of clipboard items
      */
@@ -31,8 +38,9 @@ namespace Diodon
         private string search_query = "";
         private Gtk.MenuItem search_menu_item;
         private Gtk.MenuItem spacer_menu_item;
-        private int enable_search = 0;
+        private SearchMode search_mode = SearchMode.DISABLED;
         private bool has_items = false;
+        private bool pause_keystrokes = false;
 
         // Label related constants
         private const int MAX_LABEL_WIDTH = 150;
@@ -111,6 +119,7 @@ namespace Diodon
                 }
             }
 
+            // Place-holder for Search Bar when it's disabled.
             spacer_menu_item = new Gtk.MenuItem();
             spacer_menu_item.set_label(" ");
             spacer_menu_item.get_style_context().add_class("spacer-item");
@@ -299,31 +308,40 @@ namespace Diodon
          * Update search filter and UI
          */
         private void reset_search(){
-            enable_search = 0;
+            search_mode = SearchMode.DISABLED;
             search_query = "";
             search_menu_item.hide();
             spacer_menu_item.show();
+            bool first = true;
+            pause_keystrokes = false;
             foreach(Gtk.Widget item in get_children()) {
                 if (item is ClipboardMenuItem) {
                     ClipboardMenuItem cb_item = (ClipboardMenuItem)item;
                     cb_item.show();           
+
+                    // This can be called when an old menu is deleted before creating a new menu.
+                    if (first && this.get_realized() && this.get_mapped() ){
+                        this.select_item(cb_item);
+                        first = false;
+                    }
                 }
             }
         }
 
-        /**
-         * Update search filter and UI
-         */
-        private void update_search()
-        {
-            if (enable_search == 0) {
-                reset_search();
+        private void update_search_ui(){
+            if (search_mode == SearchMode.DISABLED){
                 return;
-            } else {
-                search_menu_item.set_label(_("Search: ") + search_query);
-                search_menu_item.show();
-                spacer_menu_item.hide();
             }
+            search_menu_item.set_label(_("Search: ")+ search_query);
+            search_menu_item.show();
+            spacer_menu_item.hide();
+        }
+
+        /**
+         * Filter items on label
+         */
+        private void filter_items_on_label()
+        {
 
             string search_lower = search_query.down();
             bool first = true;
@@ -334,7 +352,7 @@ namespace Diodon
                     if (matches_search(cb_item, search_lower)) {
                         cb_item.show();
                         if (first && search_query.length > 0) {
-                            this.select_item(cb_item);
+                            this.select_item(item);
                             first = false;
                         }
                     } else {
@@ -344,6 +362,50 @@ namespace Diodon
             }
 
         }
+
+
+        private void filter_items_on_text(){
+
+            string search_lower = search_query.down();
+            pause_keystrokes = true;
+
+            this.controller.get_items_by_search_query.begin(search_lower, null, ClipboardTimerange.ALL, null, (obj, res) => {
+
+                pause_keystrokes = false;
+                if (!this.get_realized() || !this.get_mapped()){
+                    return;
+                }
+            
+                List<IClipboardItem> items = this.controller.get_items_by_search_query.end(res);
+
+                
+                 var matching_checksums = new HashTable<string, void*>(str_hash, str_equal);
+                foreach (IClipboardItem item in items) {
+                    matching_checksums.insert(item.get_checksum(),null);
+                }
+
+                bool first = true;
+
+                foreach (Gtk.Widget widget in get_children()) {
+                    if (widget is ClipboardMenuItem) {
+                        ClipboardMenuItem cb_item = (ClipboardMenuItem) widget;
+                        if (matching_checksums.contains(cb_item.get_item_checksum())) {
+                            cb_item.show();
+                            if (first) {
+                                this.select_item(widget);
+                                first = false;
+                            }
+                        } else {
+                            cb_item.hide();
+                        }
+                    }
+                }
+
+            });
+
+            
+        }
+        
 
         private bool matches_search(ClipboardMenuItem cb_item, string search_string)
         {
@@ -359,14 +421,20 @@ namespace Diodon
             uint down_keyval = Gdk.keyval_from_name("j");
             uint up_keyval = Gdk.keyval_from_name("k");
             uint label_search_keyval = Gdk.keyval_from_name("slash");
-            // uint storage_search_keyval = Gdk.keyval_from_name("?");
+            uint storage_search_keyval = Gdk.keyval_from_name("question");
             uint backspace_keyval = Gdk.keyval_from_name("BackSpace");
             uint escape_keyval = Gdk.keyval_from_name("Escape");
+            uint enter_keyval = Gdk.keyval_from_name("Return");
+            uint kp_enter_keyval = Gdk.keyval_from_name("KP_Enter");
 
             uint pressed_keyval = Gdk.keyval_to_lower(event.keyval);
+
+            if(pause_keystrokes == true){
+                return false;
+            }
             
             // Only use vi-style movement if search query is empty
-            if(enable_search == 0) {
+            if(search_mode == SearchMode.DISABLED) {
                 if(pressed_keyval == down_keyval) {
                     if(get_selected_item() == null) {
                         select_first(true);
@@ -381,8 +449,12 @@ namespace Diodon
                     move_selected(-1);
                     return true;
                 } else if(pressed_keyval == label_search_keyval && has_items){
-                    enable_search = 1;
-                    update_search();
+                    search_mode = SearchMode.LABEL;
+                    update_search_ui();
+                    return true;
+                } else if(pressed_keyval == storage_search_keyval && has_items){
+                    search_mode = SearchMode.STORAGE;
+                    update_search_ui();
                     return true;
                 }else{
                     return false;
@@ -394,19 +466,36 @@ namespace Diodon
                 if (chars > 0) {
                     long bytes = search_query.index_of_nth_char(chars - 1);
                     search_query = search_query.substring(0, bytes);
-                    update_search();
+                    update_search_ui();
+                    if (search_mode == SearchMode.LABEL){
+                        filter_items_on_label();
+                    }
                     return true;
                 }
             } else if (pressed_keyval == escape_keyval) {
                     reset_search();
                     return true;
-            } else {
+
+            } else if(search_mode == SearchMode.STORAGE && (pressed_keyval == kp_enter_keyval || pressed_keyval == enter_keyval)){
+                 if (search_query.char_count() == 0){
+                    reset_search();
+                    return true;
+                }   
+
+                pause_keystrokes = true;
+                filter_items_on_text();
+                return true;
+                
+            }else {
                 unichar c = Gdk.keyval_to_unicode(event.keyval);
                 if (c != 0 && !c.iscntrl()) {
                     StringBuilder sb = new StringBuilder(search_query);
                     sb.append_unichar(c);
                     search_query = sb.str;
-                    update_search();
+                    update_search_ui();
+                    if (search_mode == SearchMode.LABEL){
+                         filter_items_on_label();
+                    }
                     return true;
                 }
             }
